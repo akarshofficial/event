@@ -1,23 +1,42 @@
 import React, { useState, useEffect } from 'react';
 
 const CountdownCard = ({ event, onDelete }) => {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: false });
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    expired: false,
+    totalSecondsRemaining: 0,
+  });
+
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const calculateTime = () => {
-      const difference = new Date(event.target_date) - new Date();
+      const targetTime = new Date(event.target_date).getTime();
+      const now = new Date().getTime();
+      const difference = targetTime - now;
 
       if (difference <= 0) {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: true });
+        setTimeLeft({
+          days: 0,
+          hours: 0,
+          minutes: 0,
+          seconds: 0,
+          expired: true,
+          totalSecondsRemaining: 0,
+        });
         return;
       }
 
       setTimeLeft({
         days: Math.floor(difference / (1000 * 60 * 60 * 24)),
         hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((difference / 1000 / 60) % 60),
+        minutes: Math.floor((difference / (1000 * 60)) % 60),
         seconds: Math.floor((difference / 1000) % 60),
         expired: false,
+        totalSecondsRemaining: Math.floor(difference / 1000),
       });
     };
 
@@ -27,39 +46,98 @@ const CountdownCard = ({ event, onDelete }) => {
     return () => clearInterval(timer);
   }, [event.target_date]);
 
+  const formatDate = (isoString) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    return date.toLocaleDateString(undefined, {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const handleShare = () => {
+    const text = `Countdown for "${event.title}": ${
+      timeLeft.expired
+        ? 'Event has arrived!'
+        : `${timeLeft.days}d ${timeLeft.hours}h ${timeLeft.minutes}m ${timeLeft.seconds}s remaining`
+    }`;
+    navigator.clipboard?.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <div style={styles.card}>
-      <div style={styles.cardHeader}>
-        <h3 style={{ margin: 0 }}>{event.title}</h3>
-        <button onClick={() => onDelete(event.id)} style={styles.deleteBtn}>✕</button>
+    <div className={`event-card ${timeLeft.expired ? 'expired' : ''}`}>
+      <div>
+        <div className="card-top">
+          <h3 className="event-title">{event.title}</h3>
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <button
+              onClick={handleShare}
+              className="delete-btn"
+              title="Copy countdown summary"
+              style={{ fontSize: '0.9rem' }}
+            >
+              {copied ? '✓' : '🔗'}
+            </button>
+            <button
+              onClick={() => onDelete(event.id)}
+              className="delete-btn"
+              title="Delete Event"
+              aria-label="Delete Event"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div className="target-meta">
+          <span>📅</span>
+          <span>{formatDate(event.target_date)}</span>
+        </div>
       </div>
-      <p style={styles.targetDate}>
-        Target: {new Date(event.target_date).toLocaleString()}
-      </p>
 
       {timeLeft.expired ? (
-        <div style={styles.expiredBadge}>🎉 Event Arrived!</div>
+        <div className="celebration-box">
+          <div className="celebration-title">
+            <span>🎉</span>
+            <span>Event Arrived!</span>
+          </div>
+          <p className="celebration-subtitle">This milestone has been reached.</p>
+        </div>
       ) : (
-        <div style={styles.grid}>
-          <div style={styles.timeBox}><span style={styles.number}>{timeLeft.days}</span><label>Days</label></div>
-          <div style={styles.timeBox}><span style={styles.number}>{timeLeft.hours}</span><label>Hours</label></div>
-          <div style={styles.timeBox}><span style={styles.number}>{timeLeft.minutes}</span><label>Mins</label></div>
-          <div style={styles.timeBox}><span style={styles.number}>{timeLeft.seconds}</span><label>Secs</label></div>
+        <div className="timer-container">
+          <div className="timer-box">
+            <span className="timer-num">{String(timeLeft.days).padStart(2, '0')}</span>
+            <span className="timer-unit">Days</span>
+          </div>
+          <div className="timer-box">
+            <span className="timer-num">{String(timeLeft.hours).padStart(2, '0')}</span>
+            <span className="timer-unit">Hours</span>
+          </div>
+          <div className="timer-box">
+            <span className="timer-num">{String(timeLeft.minutes).padStart(2, '0')}</span>
+            <span className="timer-unit">Mins</span>
+          </div>
+          <div className="timer-box">
+            <span className="timer-num seconds-pulse">
+              {String(timeLeft.seconds).padStart(2, '0')}
+            </span>
+            <span className="timer-unit">Secs</span>
+          </div>
         </div>
       )}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+        <span>ID #{event.id}</span>
+        <span>{timeLeft.expired ? 'Status: Completed' : 'Status: In Progress'}</span>
+      </div>
     </div>
   );
-};
-
-const styles = {
-  card: { border: '1px solid #ddd', borderRadius: '8px', padding: '16px', background: '#fff', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' },
-  cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' },
-  deleteBtn: { background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: '18px' },
-  targetDate: { fontSize: '12px', color: '#666', marginBottom: '16px' },
-  expiredBadge: { padding: '8px', background: '#e6fffa', color: '#234e52', fontWeight: 'bold', textAlign: 'center', borderRadius: '4px' },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', textAlign: 'center' },
-  timeBox: { background: '#f7fafc', padding: '8px', borderRadius: '4px', border: '1px solid #edf2f7', display: 'flex', flexDirection: 'column' },
-  number: { fontSize: '18px', fontWeight: 'bold' }
 };
 
 export default CountdownCard;
