@@ -1,5 +1,6 @@
 import os
 import sys
+import traceback
 from pathlib import Path
 
 # Locate backend directory dynamically
@@ -20,29 +21,48 @@ for b_dir in possible_backend_dirs:
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 
-try:
-    import django
-    django.setup()
+_django_app = None
+_migrated = False
 
-    # Automatically apply migrations on serverless boot if needed
+def get_app():
+    global _django_app, _migrated
+    if _django_app is None:
+        import django
+        django.setup()
+
+        if not _migrated:
+            try:
+                from django.core.management import call_command
+                call_command('migrate', interactive=False)
+                _migrated = True
+            except Exception as migrate_err:
+                print(f"Notice on auto-migration: {migrate_err}")
+
+        from django.core.wsgi import get_wsgi_application
+        _django_app = get_wsgi_application()
+    return _django_app
+
+def handler(environ, start_response):
     try:
-        from django.core.management import call_command
-        call_command('migrate', interactive=False)
-    except Exception as migrate_err:
-        print(f"Notice on auto-migration: {migrate_err}")
-
-    from django.core.wsgi import get_wsgi_application
-    app = get_wsgi_application()
-    handler = app
-    application = app
-except Exception as e:
-    import json
-    def fallback_app(environ, start_response):
+        app = get_app()
+        return app(environ, start_response)
+    except Exception as e:
         status = '500 Internal Server Error'
-        headers = [('Content-Type', 'application/json')]
+        headers = [
+            ('Content-Type', 'application/json'),
+            ('Access-Control-Allow-Origin', '*'),
+            ('Access-Control-Allow-Methods', '*'),
+            ('Access-Control-Allow-Headers', '*'),
+        ]
         start_response(status, headers)
-        return [json.dumps({'status': 'error', 'detail': str(e)}).encode('utf-8')]
-    app = fallback_app
-    handler = app
-    application = app
+        import json
+        error_payload = {
+            'status': 'error',
+            'detail': str(e),
+            'traceback': traceback.format_exc(),
+            'sys_path': sys.path,
+        }
+        return [json.dumps(error_payload, indent=2).encode('utf-8')]
 
+app = handler
+application = handler

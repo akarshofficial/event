@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && npm install && npm run build",
-  "outputDirectory": "frontend/build",
+  "buildCommand": "node build.js",
+  "outputDirectory": "build",
   "functions": {
     "api/**/*.py": {
       "includeFiles": "backend/**"
@@ -13,7 +13,11 @@
       "destination": "/api/index.py"
     },
     {
-      "source": "/(.*)",
+      "source": "/api",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]
