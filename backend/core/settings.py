@@ -4,6 +4,7 @@ Django settings for core project.
 
 import os
 from pathlib import Path
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -14,12 +15,13 @@ SECRET_KEY = os.environ.get(
     'django-insecure-kv4_+@9uwwu5dn3j&n67)^ujk$4lg6k1ufz!s@bb^k&yi8phs7'
 )
 
-DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
+DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes')
 
 ALLOWED_HOSTS = [
     '*',
     '.vercel.app',
-    '.now.sh',
+    '.onrender.com',
+    '.railway.app',
     '127.0.0.1',
     'localhost',
 ]
@@ -97,14 +99,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-# Database
-# Default SQLite in BASE_DIR (or /tmp/db.sqlite3 in serverless if needed)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Database configuration (Auto-detect DATABASE_URL for Postgres/MySQL, fallback to SQLite)
+db_url = os.environ.get('DATABASE_URL')
+if db_url:
+    DATABASES = {
+        'default': dj_database_url.parse(db_url, conn_max_age=600)
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
