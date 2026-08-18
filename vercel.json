@@ -2,20 +2,54 @@
   "version": 2,
   "buildCommand": "node build.js",
   "outputDirectory": "build",
-  "functions": {
-    "api/**/*.py": {
-      "includeFiles": "backend/**",
-      "maxDuration": 15
-    }
-  },
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/index.py"
+      "source": "/api/register",
+      "destination": "/api/register.js"
+    },
+    {
+      "source": "/api/register/",
+      "destination": "/api/register.js"
+    },
+    {
+      "source": "/api/token",
+      "destination": "/api/token.js"
+    },
+    {
+      "source": "/api/token/",
+      "destination": "/api/token.js"
+    },
+    {
+      "source": "/api/token/refresh",
+      "destination": "/api/token.js"
+    },
+    {
+      "source": "/api/token/refresh/",
+      "destination": "/api/token.js"
+    },
+    {
+      "source": "/api/events/:id",
+      "destination": "/api/events.js"
+    },
+    {
+      "source": "/api/events/:id/",
+      "destination": "/api/events.js"
+    },
+    {
+      "source": "/api/events",
+      "destination": "/api/events.js"
+    },
+    {
+      "source": "/api/events/",
+      "destination": "/api/events.js"
     },
     {
       "source": "/api",
-      "destination": "/api/index.py"
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/api/",
+      "destination": "/api/index.js"
     },
     {
       "source": "/(.*)",
