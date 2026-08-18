@@ -29,6 +29,7 @@ yarn-error.log*
 frontend/build/
 build/
 dist/
+public/
 
 # Environment Variables & Secrets
 .env

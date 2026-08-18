@@ -1,5 +1,62 @@
 {
+  "version": 2,
   "rewrites": [
+    {
+      "source": "/api/register",
+      "destination": "/api/register.js"
+    },
+    {
+      "source": "/api/register/",
+      "destination": "/api/register.js"
+    },
+    {
+      "source": "/api/token",
+      "destination": "/api/token.js"
+    },
+    {
+      "source": "/api/token/",
+      "destination": "/api/token.js"
+    },
+    {
+      "source": "/api/token/refresh",
+      "destination": "/api/token.js"
+    },
+    {
+      "source": "/api/token/refresh/",
+      "destination": "/api/token.js"
+    },
+    {
+      "source": "/api/events/:id",
+      "destination": "/api/events.js"
+    },
+    {
+      "source": "/api/events/:id/",
+      "destination": "/api/events.js"
+    },
+    {
+      "source": "/api/events",
+      "destination": "/api/events.js"
+    },
+    {
+      "source": "/api/events/",
+      "destination": "/api/events.js"
+    },
+    {
+      "source": "/api/health",
+      "destination": "/api/health.js"
+    },
+    {
+      "source": "/api/health/",
+      "destination": "/api/health.js"
+    },
+    {
+      "source": "/api",
+      "destination": "/api/health.js"
+    },
+    {
+      "source": "/api/",
+      "destination": "/api/health.js"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"

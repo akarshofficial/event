@@ -5,7 +5,7 @@
   "scripts": {
     "start": "npm --prefix frontend start",
     "dev": "npm --prefix frontend start",
-    "build": "npm --prefix frontend install --legacy-peer-deps && npm --prefix frontend run build",
+    "build": "node build.js",
     "server": "python backend/manage.py runserver 8000",
     "test": "npm --prefix frontend test"
   }

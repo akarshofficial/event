@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "npm --prefix frontend install --legacy-peer-deps && npm --prefix frontend run build",
-  "outputDirectory": "frontend/build",
+  "buildCommand": "node build.js",
+  "outputDirectory": "build",
   "rewrites": [
     {
       "source": "/api/register",
