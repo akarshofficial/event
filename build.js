@@ -2,19 +2,32 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-console.log('--- Starting full-stack build ---');
+console.log('=== Vercel Full-Stack Build Start ===');
 
-// 1. Install & Build frontend
-console.log('Building React frontend...');
-execSync('npm --prefix frontend install && npm --prefix frontend run build', { stdio: 'inherit' });
+try {
+  // 1. Build frontend
+  console.log('Installing frontend dependencies...');
+  execSync('npm --prefix frontend install --legacy-peer-deps --no-audit', { stdio: 'inherit' });
 
-// 2. Copy frontend/build to root /build
-const srcDir = path.join(__dirname, 'frontend', 'build');
-const destDir = path.join(__dirname, 'build');
+  console.log('Building frontend production bundle...');
+  execSync('npm --prefix frontend run build', { stdio: 'inherit' });
 
-if (fs.existsSync(destDir)) {
-  fs.rmSync(destDir, { recursive: true, force: true });
+  // 2. Prepare root build directory
+  const srcDir = path.join(__dirname, 'frontend', 'build');
+  const destDir = path.join(__dirname, 'build');
+
+  if (!fs.existsSync(srcDir)) {
+    throw new Error(`Frontend build folder not found at ${srcDir}`);
+  }
+
+  if (fs.existsSync(destDir)) {
+    fs.rmSync(destDir, { recursive: true, force: true });
+  }
+  fs.cpSync(srcDir, destDir, { recursive: true });
+
+  console.log(`Copied ${fs.readdirSync(destDir).length} files/dirs to root /build`);
+  console.log('=== Vercel Full-Stack Build Succeeded ===');
+} catch (error) {
+  console.error('Build error:', error);
+  process.exit(1);
 }
-fs.cpSync(srcDir, destDir, { recursive: true });
-
-console.log('Build output ready in ./build');
