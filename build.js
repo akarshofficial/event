@@ -12,20 +12,27 @@ try {
   console.log('Building frontend production bundle...');
   execSync('npm --prefix frontend run build', { stdio: 'inherit' });
 
-  // 2. Prepare root build directory
   const srcDir = path.join(__dirname, 'frontend', 'build');
-  const destDir = path.join(__dirname, 'build');
 
   if (!fs.existsSync(srcDir)) {
     throw new Error(`Frontend build folder not found at ${srcDir}`);
   }
 
-  if (fs.existsSync(destDir)) {
-    fs.rmSync(destDir, { recursive: true, force: true });
-  }
-  fs.cpSync(srcDir, destDir, { recursive: true });
+  // 2. Mirror build directory to standard output directories
+  const targetDirs = [
+    path.join(__dirname, 'build'),
+    path.join(__dirname, 'dist'),
+    path.join(__dirname, 'public'),
+  ];
 
-  console.log(`Copied ${fs.readdirSync(destDir).length} files/dirs to root /build`);
+  for (const target of targetDirs) {
+    if (fs.existsSync(target)) {
+      fs.rmSync(target, { recursive: true, force: true });
+    }
+    fs.cpSync(srcDir, target, { recursive: true });
+    console.log(`Copied build files to ${target}`);
+  }
+
   console.log('=== Vercel Full-Stack Build Succeeded ===');
 } catch (error) {
   console.error('Build error:', error);
