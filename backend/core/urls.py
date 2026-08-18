@@ -2,12 +2,14 @@ from django.contrib import admin
 from django.urls import path, include
 from django.http import JsonResponse
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from countdowns.views import register_user
 
 def health_check(request):
     return JsonResponse({
         'status': 'online',
         'message': 'Event Countdown API is running smoothly!',
         'endpoints': {
+            'register': '/api/register/',
             'token': '/api/token/',
             'refresh_token': '/api/token/refresh/',
             'events': '/api/events/',
@@ -24,6 +26,10 @@ urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
     
+    # Registration (supports both /api/register/ and /register/)
+    path('api/register/', register_user, name='register'),
+    path('register/', register_user, name='register_direct'),
+
     # JWT Auth (supports both /api/token/ and /token/)
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

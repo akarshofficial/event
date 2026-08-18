@@ -14,12 +14,23 @@ possible_backend_dirs = [
 
 for b_dir in possible_backend_dirs:
     if b_dir.exists() and (b_dir / 'core').exists():
-        sys.path.insert(0, str(b_dir))
+        if str(b_dir) not in sys.path:
+            sys.path.insert(0, str(b_dir))
         break
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 
 try:
+    import django
+    django.setup()
+
+    # Automatically apply migrations on serverless boot if needed
+    try:
+        from django.core.management import call_command
+        call_command('migrate', interactive=False)
+    except Exception as migrate_err:
+        print(f"Notice on auto-migration: {migrate_err}")
+
     from django.core.wsgi import get_wsgi_application
     app = get_wsgi_application()
     handler = app
@@ -34,3 +45,4 @@ except Exception as e:
     app = fallback_app
     handler = app
     application = app
+

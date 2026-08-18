@@ -106,12 +106,19 @@ if db_url:
         'default': dj_database_url.parse(db_url, conn_max_age=600)
     }
 else:
+    if os.environ.get('VERCEL'):
+        import tempfile
+        db_file = Path(tempfile.gettempdir()) / 'db.sqlite3'
+    else:
+        db_file = BASE_DIR / 'db.sqlite3'
+
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'NAME': db_file,
         }
     }
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
