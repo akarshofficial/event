@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const DB_FILE = path.join(os.tmpdir(), 'events_db_v1.json');
+const DB_FILE = path.join(os.tmpdir(), 'events_db_v2.json');
 const JWT_SECRET = process.env.JWT_SECRET || 'event-countdown-secret-jwt-key-2026';
 
 function getDefaultDB() {
@@ -27,6 +27,10 @@ function getDefaultDB() {
         id: 1,
         title: '🚀 Major Product Launch',
         target_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        category: 'launch',
+        notes: 'Global feature release and public announcement.',
+        color: 'blue',
+        pinned: true,
         ownerId: 1,
         username: 'admin',
         created_at: new Date().toISOString(),
@@ -35,6 +39,22 @@ function getDefaultDB() {
         id: 2,
         title: '🎉 New Year Celebration',
         target_date: new Date(new Date().getFullYear() + 1, 0, 1, 0, 0, 0).toISOString(),
+        category: 'celebration',
+        notes: 'Countdown to the new year with friends and family!',
+        color: 'purple',
+        pinned: false,
+        ownerId: 1,
+        username: 'admin',
+        created_at: new Date().toISOString(),
+      },
+      {
+        id: 3,
+        title: '🎂 Birthday Party',
+        target_date: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000).toISOString(),
+        category: 'birthday',
+        notes: 'Dinner and cake celebration.',
+        color: 'rose',
+        pinned: false,
         ownerId: 2,
         username: 'akarsh',
         created_at: new Date().toISOString(),
@@ -68,7 +88,7 @@ function writeDB(data) {
   try {
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
   } catch (err) {
-    // In-memory keeps working
+    // In-memory fallback
   }
 }
 

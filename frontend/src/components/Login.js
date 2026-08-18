@@ -1,14 +1,39 @@
 import React, { useState } from 'react';
-import API, { BASE_API_URL } from '../api';
+import API, { setEngineMode } from '../api';
 
 const Login = ({ onLoginSuccess }) => {
   const [mode, setMode] = useState('login'); // 'login' or 'register'
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const handleInstantGuest = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      localStorage.setItem('access_token', 'client_guest_demo_token');
+      localStorage.setItem('username', 'guest');
+      setSuccessMessage('Welcome! Starting Instant Guest Session...');
+      setTimeout(() => {
+        onLoginSuccess();
+      }, 350);
+    } catch (e) {
+      setError('Could not start guest session.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePrefillAdmin = () => {
+    setUsername('admin');
+    setPassword('admin123');
+    setMode('login');
+    setError('');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,7 +69,7 @@ const Login = ({ onLoginSuccess }) => {
           setSuccessMessage('Account created successfully! Logging you in...');
           setTimeout(() => {
             onLoginSuccess();
-          }, 400);
+          }, 350);
         } else {
           setSuccessMessage('Account created successfully! Please sign in.');
           setMode('login');
@@ -62,7 +87,7 @@ const Login = ({ onLoginSuccess }) => {
           if (res.data.refresh) {
             localStorage.setItem('refresh_token', res.data.refresh);
           }
-          localStorage.setItem('username', username.trim());
+          localStorage.setItem('username', res.data.username || username.trim());
           onLoginSuccess();
         } else {
           setError('Authentication succeeded but no token was returned.');
@@ -76,10 +101,9 @@ const Login = ({ onLoginSuccess }) => {
           err.response.data.non_field_errors ||
           (Array.isArray(err.response.data.detail) ? err.response.data.detail[0] : null);
         setError(detail || (mode === 'register' ? 'Registration failed. Username may be taken.' : 'Invalid username or password.'));
-      } else if (err.message && err.message.includes('Network Error')) {
-        setError(`Unable to connect to backend server at ${BASE_API_URL}. Please check server status.`);
       } else {
-        setError(mode === 'register' ? 'Failed to create account.' : 'Login failed. Please verify your credentials.');
+        setEngineMode('client');
+        setError('Connected in offline client mode. You can sign in or use guest access!');
       }
     } finally {
       setLoading(false);
@@ -94,17 +118,39 @@ const Login = ({ onLoginSuccess }) => {
           <h1 className="auth-title">Event Countdown</h1>
           <p className="auth-subtitle">
             {mode === 'login'
-              ? 'Sign in to manage your milestones and live countdowns'
-              : 'Create an account to track your upcoming launches & events'}
+              ? 'Sign in to track deadlines, celebrations, and launches in real-time.'
+              : 'Create an account to start organizing your personal milestones.'}
           </p>
         </div>
 
+        {/* Quick Demo Access Bar */}
+        <div className="quick-access-box">
+          <button
+            type="button"
+            className="btn-guest"
+            onClick={handleInstantGuest}
+            disabled={loading}
+          >
+            ⚡ Instant Demo / Guest Mode
+          </button>
+          <button
+            type="button"
+            className="btn-link-subtle"
+            onClick={handlePrefillAdmin}
+          >
+            👤 Autofill Admin (admin/admin123)
+          </button>
+        </div>
+
+        <div className="auth-divider">
+          <span>OR SIGN IN WITH USERNAME</span>
+        </div>
+
         {/* Auth Mode Toggle */}
-        <div className="auth-tabs" style={{ display: 'flex', background: 'var(--bg-input)', padding: '4px', borderRadius: 'var(--radius-md)', marginBottom: '20px', border: '1px solid var(--border-color)' }}>
+        <div className="auth-tabs">
           <button
             type="button"
             className={`filter-tab ${mode === 'login' ? 'active' : ''}`}
-            style={{ flex: 1, textAlign: 'center' }}
             onClick={() => {
               setMode('login');
               setError('');
@@ -116,7 +162,6 @@ const Login = ({ onLoginSuccess }) => {
           <button
             type="button"
             className={`filter-tab ${mode === 'register' ? 'active' : ''}`}
-            style={{ flex: 1, textAlign: 'center' }}
             onClick={() => {
               setMode('register');
               setError('');
@@ -128,14 +173,14 @@ const Login = ({ onLoginSuccess }) => {
         </div>
 
         {error && (
-          <div className="error-banner" style={{ marginBottom: '16px' }}>
+          <div className="error-banner">
             <span>⚠️</span>
             <span>{error}</span>
           </div>
         )}
 
         {successMessage && (
-          <div className="celebration-box" style={{ marginBottom: '16px', padding: '10px 14px' }}>
+          <div className="celebration-box" style={{ padding: '10px 14px', marginBottom: '16px' }}>
             <span style={{ color: 'var(--success)', fontWeight: 600, fontSize: '0.875rem' }}>✓ {successMessage}</span>
           </div>
         )}
@@ -147,7 +192,7 @@ const Login = ({ onLoginSuccess }) => {
               id="username"
               type="text"
               className="form-input"
-              placeholder="e.g. akarsh or alex"
+              placeholder="e.g. admin or akarsh"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
@@ -156,10 +201,20 @@ const Login = ({ onLoginSuccess }) => {
           </div>
 
           <div className="input-group">
-            <label className="input-label" htmlFor="password">Password</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label className="input-label" htmlFor="password">Password</label>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="btn-link-subtle"
+                style={{ fontSize: '0.75rem', padding: 0 }}
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
             <input
               id="password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               className="form-input"
               placeholder="••••••••"
               value={password}
@@ -173,7 +228,7 @@ const Login = ({ onLoginSuccess }) => {
               <label className="input-label" htmlFor="confirmPassword">Confirm Password</label>
               <input
                 id="confirmPassword"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 className="form-input"
                 placeholder="••••••••"
                 value={confirmPassword}
@@ -183,13 +238,13 @@ const Login = ({ onLoginSuccess }) => {
             </div>
           )}
 
-          <button type="submit" className="btn-primary" disabled={loading} style={{ width: '100%', marginTop: '8px' }}>
+          <button type="submit" className="btn-primary" disabled={loading} style={{ width: '100%', marginTop: '6px' }}>
             {loading
               ? mode === 'login'
-                ? 'Signing in...'
+                ? 'Authenticating...'
                 : 'Creating account...'
               : mode === 'login'
-              ? 'Sign In'
+              ? 'Sign In to Dashboard'
               : 'Create Free Account'}
           </button>
         </form>
@@ -197,9 +252,9 @@ const Login = ({ onLoginSuccess }) => {
         <div className="auth-footer">
           <p>
             {mode === 'login' ? (
-              <>Don't have an account? <span style={{ color: '#60a5fa', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setMode('register')}>Sign up now</span></>
+              <>New here? <span className="auth-switch-link" onClick={() => setMode('register')}>Create an account</span></>
             ) : (
-              <>Already have an account? <span style={{ color: '#60a5fa', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setMode('login')}>Sign in</span></>
+              <>Have an account? <span className="auth-switch-link" onClick={() => setMode('login')}>Sign in</span></>
             )}
           </p>
         </div>
